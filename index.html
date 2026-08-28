@@ -28,6 +28,22 @@
           <span class="dots"><span>▮▮▮</span><span>◗</span><span>100%</span></span>
         </div>
 
+        <!-- Cold-start splash. Sits above everything until it fades out. -->
+        <div class="splash" id="splash">
+          <div class="splash-inner">
+            <div class="splash-mark">
+              <span class="sm-r">R</span>
+              <i class="sm-ring"></i>
+            </div>
+            <h2 class="splash-name">Rethinka</h2>
+            <p class="splash-tag">从想法，到章法</p>
+          </div>
+          <div class="splash-foot">
+            <div class="splash-bar"><i></i></div>
+            <p class="splash-legal">仅供研究参考 · 不提供投资建议</p>
+          </div>
+        </div>
+
         <div class="rail" id="rail" role="button" tabindex="0"
              aria-expanded="false" aria-label="展开你的决策卡进度">
           <div class="rail-top">
@@ -40,8 +56,33 @@
 
         <div class="body" id="body"></div>
 
+        <!-- WeChat-style composer: mode toggle, text field, attachments, voice. -->
         <div class="footer" id="footer">
-          <button class="mic" id="mic" aria-label="按住说话">🎙</button>
+          <div class="composer">
+            <button class="cmp-icon" id="modeToggle" aria-label="切换语音输入">🎙</button>
+
+            <div class="cmp-field" id="cmpField">
+              <input
+                type="text"
+                class="cmp-input"
+                id="cmpInput"
+                placeholder="说点什么，或者直接选下面的选项"
+                aria-label="输入消息"
+              />
+              <button class="cmp-hold" id="cmpHold" hidden>按住 说话</button>
+            </div>
+
+            <button class="cmp-icon" id="plusBtn" aria-label="更多：图片、文件" aria-expanded="false">＋</button>
+            <button class="cmp-send" id="sendBtn" hidden aria-label="发送">↑</button>
+          </div>
+
+          <div class="attach" id="attachPanel" hidden>
+            <button class="att" data-kind="photo"><span class="att-ico">🖼</span>照片</button>
+            <button class="att" data-kind="camera"><span class="att-ico">📷</span>拍摄</button>
+            <button class="att" data-kind="file"><span class="att-ico">📄</span>文件</button>
+            <button class="att" data-kind="screenshot"><span class="att-ico">📱</span>持仓截图</button>
+          </div>
+
           <span class="footer-hint" id="footerHint"></span>
         </div>
 

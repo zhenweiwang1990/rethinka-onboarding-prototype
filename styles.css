@@ -327,6 +327,275 @@ html, body {
 /* subtle affordance that tapping skips the wait */
 .body.waiting { cursor: pointer; }
 
+/* ---------------------------------------------------------------- splash */
+
+.splash {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: linear-gradient(168deg, #1b1917 0%, #12100f 62%, #0d0c0b 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  transition: opacity 520ms ease, visibility 520ms;
+}
+
+.splash.gone { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.splash-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: splash-rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.splash-mark {
+  position: relative;
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 20px;
+}
+
+.sm-r {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+/* Ring draws itself once, then rests — a "structure forming" cue. */
+.sm-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(216, 94, 69, 0.28);
+  border-top-color: var(--accent);
+  animation: sm-spin 1.15s cubic-bezier(0.5, 0, 0.2, 1) 1 both;
+}
+
+.splash-name {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: #f4f1eb;
+  margin: 0;
+}
+
+.splash-tag {
+  font-size: 12.5px;
+  color: #8d857b;
+  margin: 9px 0 0;
+  letter-spacing: 0.14em;
+}
+
+.splash-foot {
+  position: absolute;
+  bottom: 34px;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.splash-bar {
+  width: 92px;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.09);
+  overflow: hidden;
+}
+
+.splash-bar i {
+  display: block;
+  height: 100%;
+  width: 40%;
+  border-radius: 2px;
+  background: var(--accent);
+  animation: splash-load 1500ms ease-in-out both;
+}
+
+.splash-legal { font-size: 10px; color: #5f5952; margin: 0; letter-spacing: 0.03em; }
+
+@keyframes splash-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sm-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes splash-load {
+  0% { width: 8%; }
+  70% { width: 76%; }
+  100% { width: 100%; }
+}
+
+/* ------------------------------------------------------------- composer */
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  width: 100%;
+}
+
+.cmp-icon {
+  width: 31px;
+  height: 31px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, transform 120ms ease;
+}
+
+.cmp-icon:hover { background: var(--elevated); border-color: var(--border-strong); }
+.cmp-icon:active { transform: scale(0.93); }
+.cmp-icon.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+.cmp-field { flex: 1; min-width: 0; }
+
+.cmp-input {
+  width: 100%;
+  height: 31px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0 13px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.cmp-input::placeholder { color: var(--border-strong); }
+
+.cmp-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(216, 94, 69, 0.1);
+}
+
+/* Press-and-hold voice button, swapped in for the text field. */
+.cmp-hold {
+  width: 100%;
+  height: 31px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  transition: background 130ms ease, transform 130ms ease;
+}
+
+.cmp-hold.holding {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: scale(0.985);
+}
+
+.cmp-send {
+  width: 31px;
+  height: 31px;
+  flex: none;
+  border-radius: 50%;
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 120ms ease, opacity 140ms ease;
+}
+
+.cmp-send:active { transform: scale(0.9); }
+
+/* attachment tray */
+.attach {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 9px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  animation: tray 200ms ease both;
+}
+
+.att {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 2px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font: inherit;
+  font-size: 10px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 130ms ease, border-color 130ms ease, transform 120ms ease;
+}
+
+.att:hover { background: var(--elevated); border-color: var(--border-strong); color: var(--ink-soft); }
+.att:active { transform: scale(0.96); }
+.att-ico { font-size: 17px; line-height: 1; }
+
+@keyframes tray {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* an attached file, echoed into the transcript */
+.bubble.attach-echo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.ae-ico {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.16);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  flex: none;
+}
+
+.ae-meta { min-width: 0; }
+.ae-name { font-size: 12px; font-weight: 600; }
+.ae-size { font-size: 10px; opacity: 0.75; margin-top: 1px; }
+
 /* ---------------------------------------------------- workspace (the payoff) */
 
 /* .card is defined later in this file at equal specificity, so qualify these

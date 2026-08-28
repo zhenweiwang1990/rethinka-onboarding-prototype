@@ -16,7 +16,6 @@ const railCount = $("#railCount");
 const railSlots = $("#railSlots");
 const railNote = $("#railNote");
 const footer = $("#footer");
-const mic = $("#mic");
 const voiceWrap = $("#voiceWrap");
 const voiceLive = $("#voiceLive");
 const storyEl = $("#story");
@@ -1109,13 +1108,129 @@ body.addEventListener("click", (e) => {
   flushBeats();
 });
 
+/* ------------------------------------------------------------- composer */
+
+/**
+ * WeChat-style input: a keyboard/voice mode toggle, a text field that turns
+ * into a send button once you type, and an attachment tray for images and
+ * files. Options remain the low-effort path; this is the escape hatch for
+ * users who would rather just say it.
+ */
+const modeToggle = $("#modeToggle");
+const cmpInput = $("#cmpInput");
+const cmpHold = $("#cmpHold");
+const plusBtn = $("#plusBtn");
+const sendBtn = $("#sendBtn");
+const attachPanel = $("#attachPanel");
+
+let voiceMode = false;
+
+function setVoiceMode(on) {
+  voiceMode = on;
+  cmpInput.hidden = on;
+  cmpHold.hidden = !on;
+  modeToggle.textContent = on ? "⌨" : "🎙";
+  modeToggle.classList.toggle("on", on);
+  modeToggle.setAttribute("aria-label", on ? "切换键盘输入" : "切换语音输入");
+  if (!on) cmpInput.focus();
+  syncSend();
+}
+
+function syncSend() {
+  const has = !voiceMode && cmpInput.value.trim().length > 0;
+  sendBtn.hidden = !has;
+  plusBtn.hidden = has;
+}
+
+function closeTray() {
+  attachPanel.hidden = true;
+  plusBtn.setAttribute("aria-expanded", "false");
+}
+
+modeToggle.addEventListener("click", () => {
+  closeTray();
+  setVoiceMode(!voiceMode);
+});
+
+cmpInput.addEventListener("input", syncSend);
+cmpInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") sendTyped();
+});
+sendBtn.addEventListener("click", sendTyped);
+
+plusBtn.addEventListener("click", () => {
+  const open = attachPanel.hidden;
+  attachPanel.hidden = !open;
+  plusBtn.setAttribute("aria-expanded", String(open));
+});
+
+/**
+ * Free text is parsed the same way voice is: pull out whatever slots we can,
+ * then rejoin the graph. A real build would send this to the LLM loop.
+ */
+function sendTyped() {
+  const text = cmpInput.value.trim();
+  if (!text) return;
+  cmpInput.value = "";
+  syncSend();
+  closeTray();
+  handleFreeInput(text);
+}
+
+const ATTACH_COPY = {
+  photo: ["🖼", "IMG_2418.HEIC", "2.4 MB · 图片"],
+  camera: ["📷", "拍摄_0828.jpg", "1.8 MB · 图片"],
+  file: ["📄", "持仓明细_2026Q3.pdf", "312 KB · PDF"],
+  screenshot: ["📱", "券商持仓截图.png", "1.1 MB · 图片"],
+};
+
+attachPanel.addEventListener("click", (e) => {
+  const btn = e.target.closest(".att");
+  if (!btn) return;
+  closeTray();
+  const [ico, name, size] = ATTACH_COPY[btn.dataset.kind];
+
+  clearBeats();
+  const echo = el("div", "bubble user attach-echo enter");
+  echo.append(el("span", "ae-ico", ico));
+  const meta = el("div", "ae-meta");
+  meta.append(el("div", "ae-name", name));
+  meta.append(el("div", "ae-size", size));
+  echo.append(meta);
+  body.append(echo);
+  scrollDown();
+
+  pushTrail("上传附件", name);
+
+  // A screenshot is a real shortcut: it routes into the portfolio branch.
+  const isHolding = btn.dataset.kind === "screenshot" || btn.dataset.kind === "file";
+  beatSay({
+    t: isHolding
+      ? "收到，我看到你的持仓了。正在识别标的和成本价……"
+      : "收到，我看一下这张图。识别到的信息我会跟你确认。",
+  });
+  if (isHolding) {
+    beatQueue.push({
+      wait: 900,
+      run: () => {
+        state.entry = "review";
+        state.slots.source = "截图导入";
+        syncEntryButtons();
+        go("b_parsed");
+      },
+    });
+  }
+  runBeats();
+});
+
 /* ------------------------------------------------------------- voice */
 
 let holdTimer = null;
 let wordTimer = null;
 
 function startHold() {
-  mic.classList.add("holding");
+  cmpHold.classList.add("holding");
+  cmpHold.textContent = "松开 发送";
   voiceWrap.classList.add("on");
   voiceLive.textContent = "";
   const words = VOICE_TRANSCRIPT.split(" ");
@@ -1131,27 +1246,54 @@ function startHold() {
 function endHold() {
   clearTimeout(holdTimer);
   clearInterval(wordTimer);
-  mic.classList.remove("holding");
+  cmpHold.classList.remove("holding");
+  cmpHold.textContent = "按住 说话";
   if (!voiceWrap.classList.contains("on")) return;
   voiceLive.textContent = VOICE_TRANSCRIPT;
   setTimeout(() => {
     voiceWrap.classList.remove("on");
-    Object.assign(state.slots, VOICE_SLOTS);
-    state.entry = "voice";
-    syncEntryButtons();
-    pushTrail("按住说话", VOICE_TRANSCRIPT);
-    // Echo what they said, then let the node pace its own reply.
-    go("v_result", { choice: VOICE_TRANSCRIPT, text: "让我想想……" });
+    handleFreeInput(VOICE_TRANSCRIPT, true);
   }, 560);
 }
 
-mic.addEventListener("mousedown", startHold);
-mic.addEventListener("touchstart", (e) => {
+cmpHold.addEventListener("mousedown", startHold);
+cmpHold.addEventListener("touchstart", (e) => {
   e.preventDefault();
   startHold();
 });
-window.addEventListener("mouseup", () => mic.classList.contains("holding") && endHold());
-window.addEventListener("touchend", () => mic.classList.contains("holding") && endHold());
+window.addEventListener("mouseup", () => cmpHold.classList.contains("holding") && endHold());
+window.addEventListener("touchend", () => cmpHold.classList.contains("holding") && endHold());
+
+/**
+ * Shared handler for voice and typed input. The demo recognises a few shapes;
+ * anything else gets a graceful "let me work with what you gave me" path.
+ */
+function handleFreeInput(text, isVoice = false) {
+  const t = text.trim();
+
+  // The scripted demo utterance (or anything close to it) fast-fills 4 slots.
+  const looksLikeThesis = isVoice || /财报|超预期|看多|看空|想买|跳水|涨|跌/.test(t);
+
+  if (looksLikeThesis && /英伟达|NVDA|财报/i.test(t)) {
+    Object.assign(state.slots, VOICE_SLOTS);
+    state.entry = "voice";
+    syncEntryButtons();
+    pushTrail(isVoice ? "按住说话" : "键盘输入", t);
+    go("v_result", { choice: t, text: "让我想想……" });
+    return;
+  }
+
+  // Otherwise acknowledge and route to the most useful starting point rather
+  // than dead-ending on "I didn't understand that".
+  pushTrail(isVoice ? "按住说话" : "键盘输入", t);
+  clearBeats();
+  body.innerHTML = "";
+  body.append(el("div", "bubble user enter", t));
+  beatSay({ t: "我记下了。" });
+  beatSay({ t: "为了给你更有价值的分析，我先确认几个关键信息——", cls: "sub" });
+  beatQueue.push({ wait: 400, run: () => go("a_symbol") });
+  runBeats();
+}
 
 /* ------------------------------------------------------------- entries */
 
@@ -1188,6 +1330,7 @@ ENTRIES.forEach((e) => {
   b.onclick = () => {
     if (e.id === "voice") {
       reset("welcome", "voice");
+      setVoiceMode(true);
       setTimeout(() => {
         startHold();
       }, 260);
@@ -1199,8 +1342,45 @@ ENTRIES.forEach((e) => {
 });
 
 const home = el("button", null, "⌂ 首页");
-home.onclick = () => reset("welcome", "analyze");
+home.onclick = () => {
+  // Replay the cold start: reset first, then let the splash re-trigger render.
+  reset("welcome", "analyze");
+  clearBeats();
+  runSplash();
+};
 entrySwitch.prepend(home);
 
+/* ------------------------------------------------------------- splash */
+
+const splash = $("#splash");
+
+/**
+ * Cold-start screen. Short enough not to be a toll booth, long enough to set
+ * the tone before the first question. Tapping skips it.
+ */
+function runSplash() {
+  splash.classList.remove("gone");
+  void splash.offsetWidth; // restart the CSS animations on replay
+  clearTimeout(runSplash.t);
+  runSplash.t = setTimeout(dismissSplash, 1900);
+}
+
+/**
+ * The conversation only starts once the splash is out of the way — otherwise
+ * its opening beats play behind it and the user misses them. Tapping the
+ * splash both skips it and starts the conversation immediately.
+ */
+function dismissSplash() {
+  if (splash.classList.contains("gone")) return;
+  clearTimeout(runSplash.t);
+  splash.classList.add("gone");
+  render();
+}
+
+splash.addEventListener("click", dismissSplash);
+
 syncEntryButtons();
-render();
+setVoiceMode(false);
+renderRail(NODES.welcome);
+renderStory(NODES.welcome);
+runSplash();
