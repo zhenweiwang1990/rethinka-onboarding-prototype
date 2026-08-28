@@ -466,6 +466,7 @@ html, body {
   transition: background 140ms ease, border-color 140ms ease, transform 120ms ease;
 }
 
+.cmp-icon[hidden] { display: none; }
 .cmp-icon:hover { background: var(--elevated); border-color: var(--border-strong); }
 .cmp-icon:active { transform: scale(0.93); }
 .cmp-icon.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
@@ -511,6 +512,8 @@ html, body {
   transition: background 130ms ease, transform 130ms ease;
 }
 
+.cmp-hold[hidden] { display: none; }
+
 .cmp-hold.holding {
   background: var(--accent-soft);
   border-color: var(--accent);
@@ -535,6 +538,7 @@ html, body {
   transition: transform 120ms ease, opacity 140ms ease;
 }
 
+.cmp-send[hidden] { display: none; }
 .cmp-send:active { transform: scale(0.9); }
 
 /* attachment tray */
@@ -547,6 +551,10 @@ html, body {
   border-top: 1px solid var(--border);
   animation: tray 200ms ease both;
 }
+
+/* An explicit `display` beats the UA rule for [hidden], so every element we
+   toggle via the hidden attribute has to opt back out by hand. */
+.attach[hidden] { display: none; }
 
 .att {
   display: flex;
