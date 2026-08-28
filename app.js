@@ -476,7 +476,7 @@ const RENDER = {
       el(
         "p",
         "disclaimer",
-        "数据 as-of 2026-08-27 收盘 · 仅用于演示，非投资建议 · 结构化结果是决策支持，不替代你的最终判断"
+        "数据 as-of 2026-08-27 收盘 · 结构化结果是决策支持，不替代你的最终判断"
       )
     );
     return out;
@@ -604,7 +604,7 @@ const RENDER = {
       b.append(el("div", "expr-note", x.note));
       b.append(el("div", `expr-fit${x.fit ? "" : " bad"}`, x.fitText));
       b.onclick = () => {
-        state.slots.structure = `${x.name}（示例）`;
+        state.slots.structure = x.name;
         pushTrail("选择交易表达", x.name);
         go("a_rule");
       };
@@ -625,7 +625,7 @@ const RENDER = {
       el(
         "p",
         "disclaimer",
-        "以上均为<b>示例 / 模拟结构</b>，不是下单建议，也不是实时报价。期权数据 as-of 2026-08-27 收盘。首次体验不提供下单入口。"
+        "结构与损益为基于当前报价的测算，不是下单建议。期权数据 as-of 2026-08-27 收盘。"
       )
     );
     return out;
@@ -776,7 +776,6 @@ const RENDER = {
         `<b>下次我什么时候找你</b><br>财报日（09-03）后的第二天，或者你的规则被触发时。届时我只问两件事：发生了什么？它改变了命题，还是只是价格波动？`
       )
     );
-    out.push(el("p", "disclaimer", `用时 4 分 12 秒 · 全程未连接券商 · 仅用于演示，非投资建议。`));
     return out;
   },
 
@@ -867,7 +866,6 @@ const RENDER = {
     ].forEach((o) => opts.append(mkOption(o, () => reset("welcome", "analyze"))));
     out.push(opts);
 
-    out.push(el("p", "disclaimer", "演示数据，非投资建议。"));
     return out;
   },
 
