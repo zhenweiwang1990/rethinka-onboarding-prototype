@@ -74,13 +74,23 @@ python3 -m http.server 4599
 ## 文件
 
 ```
-index.html    结构：左手机 + 右说明面板
-script.js     对话图谱：26 个节点、文案、每个选项的回应
-app.js        渲染与节奏引擎、各屏渲染器、演示数据
-styles.css    设计系统（对齐 fin-mobile 主题）
+index.html           结构：左手机 + 右说明面板
+script.js            对话图谱：26 个节点、文案、每个选项的回应
+app.js               渲染与节奏引擎、各屏渲染器、演示数据
+styles.css           设计系统（对齐 fin-mobile 主题）
+ONBOARDING-AGENT.md  落地规格：system prompt、tools、end 门槛、召回钩子
 ```
 
 改文案只需要动 `script.js`；改视觉只需要动 `styles.css`。
+
+## 从原型到实现
+
+原型演示的是**交互形态**，[ONBOARDING-AGENT.md](ONBOARDING-AGENT.md) 描述的是**背后怎么跑**：
+
+- onboarding 用独立的 LLM 循环，而不是复用常规对话 agent
+- `end_onboarding` 是一道资产门槛（命题 + 失效条件 + 纪律 + 召回钩子），不是"聊够了就结束"
+- 数据检索工具直接复用 VisionClaw 的 `financial-tool` MCP server
+- 完整 system prompt，含语气准则和"用户逻辑站不住时怎么办"
 
 ---
 
